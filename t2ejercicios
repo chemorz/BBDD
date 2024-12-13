@@ -1,0 +1,58 @@
+-- Consulta 7. Explica el resultado de esta consulta. Elabora un enunciado.
+-- Consulta 7. SELECT Ciudad.Nombre AS "Ciudad", Pais.Nombre AS "País" 
+-- Consulta 7. FROM   Ciudad LEFT JOIN Pais 
+-- Consulta 7. ON     Ciudad.Id = Pais.Capital
+--Nombre de todos los países junto con el nombre de su capital.
+
+-- Consulta 8. Explica el resultado de esta consulta. Elabora un enunciado.
+-- Consulta 8. SELECT Ciudad.Nombre AS "Ciudad", Pais.Nombre AS "País" 
+-- Consulta 8. FROM   Ciudad LEFT JOIN Pais 
+-- Consulta 8. ON     Ciudad.CodigoPais = Pais.Codigo
+-- Nombre de todas las ciudades que pertenezcan a un pais
+
+-- Consulta 9. Nombre de las ciudades que no son capital de ningún país.
+SELECT Ciudad.Nombre AS 'Ciudad'
+FROM Ciudad LEFT JOIN Pais 
+ON Ciudad.Id = Pais.Capital
+WHERE Pais.Capital IS NULL;
+-- Consulta 10. Nombre de las ciudades y nombre del país al que pertenece de las ciudades que no son capital de ningún país.
+SELECT Ciudad.Nombre AS 'Ciudad', Pais.Nombre AS 'Pais'
+FROM Ciudad LEFT JOIN Pais 
+ON Ciudad.CodigoPais = Pais.Codigo
+WHERE Ciudad.Id <> Pais.Capital;
+
+-- Consulta 11. Nombre de las lenguas junto con el país en el que se hablan
+SELECT LenguaPais.Lengua AS 'Lengua', Pais.Nombre AS 'Pais'
+FROM LenguaPais JOIN Pais 
+ON LenguaPais.CodigoPais = Pais.Codigo;
+
+-- Consulta 12. Nombre de todas las lenguas junto con el país en el que se hablan
+SELECT LenguaPais.Lengua AS 'Lengua', Pais.Nombre AS 'Pais'
+FROM LenguaPais LEFT JOIN Pais 
+ON LenguaPais.CodigoPais = Pais.Codigo;
+-- Sale el mismo resultado porque no pueden haber lenguas sin pais en el que se hablen
+
+-- Consulta 13. Nombre de todos los países junto con las lenguas que se hablan en ese país.
+SELECT Pais.Nombre AS 'Nombre', LenguaPais.Lengua AS 'Lengua'
+FROM Pais LEFT JOIN LenguaPais
+ON Pais.Codigo = LenguaPais.CodigoPais;
+
+-- Consulta 14. Nombre de las lenguas que no tienen asignado ningún país.
+-- Todas las lenguas tienen asignado un pais porque ninguna tiene NULL en el Codigo
+
+-- Consulta 15. Nombre de los países que no tienen asignada ninguna lengua.
+SELECT Pais.Nombre AS 'Pais', LenguaPais.Lengua AS 'Lengua'
+FROM Pais LEFT JOIN LenguaPais 
+ON Pais.Codigo = LenguaPais.CodigoPais 
+WHERE LenguaPais.Lengua IS NULL;
+
+-- Consulta 16. Listado de capitales junto con las lenguas que se hablan. Suponemos que al ser la capital, todas las lenguas que se hablan en un país, se hablan en la capital.
+SELECT Ciudad.Nombre AS 'Capital', LenguaPais.Lengua AS 'Lengua'
+FROM Ciudad JOIN Pais JOIN LenguaPais 
+ON Ciudad.Id = Pais.Capital AND Pais.Codigo = LenguaPais.CodigoPais;
+
+-- Consulta 17. Listado de capitales junto con las lenguas que se hablan. Suponemos que al ser la capital, todas las lenguas que se hablan en un país, se hablan en la capital. Importante: si un país no tiene ninguna lengua asignada saldrá su capital con valor nulo en lengua. Pista: haremos Ciudad JOIN (Pais LEFT JOIN LenguaPais) respetando los paréntesis indicados.
+SELECT Ciudad.Nombre AS 'Capital', LenguaPais.Lengua AS 'Lengua'
+FROM Ciudad JOIN (Pais LEFT JOIN LenguaPais ON Pais.Codigo = LenguaPais.CodigoPais) 
+ON Ciudad.Id = Pais.Capital
+WHERE ;
