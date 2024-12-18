@@ -1,0 +1,781 @@
+/*
+Bases de Datos
+Tema 2. SQL avanzado I
+
+Análisis de los nulos: todas las consultas llevarán el mismo análisis de nulos realizado en clase.
+En este tema el tratamiento de nulos sólo es obligatorio cuando afectan negativamente. Si no hay nulos o no afectan negativamente no hace falta decir nada. Todo ello con las excepciones que comentaremos en clase ya que en algún tipo de consulta será obligatorio hacer análisis de nulos.
+*/
+
+-- -----------------------------------------------------------------
+-- Tema 2. SQL avanzado I. Consultas de clase
+-- -----------------------------------------------------------------
+
+-- 1. Realiza el producto de las tablas Pais y Ciudad. ¿Es el número de registros que sale correcto? Justifica tu respuesta
+SELECT *
+FROM Pais JOIN Ciudad; 
+
+-- 2. Del producto anterior selecciona los registros correctos. ¿Es el número de registros que sale correcto? Justifica tu respuesta
+--Si es correcto 
+--Para justificarlos tendremos que hacer 
+SELECT COUNT(*) FROM Pais; 
+SELECT COUNT(*) FROM Ciudad;
+SELECT 4079 * 239;
+
+-- 3. ¿Recuerdas que entre las tablas Ciudad y Pais hay dos relaciones? Filtra el producto utilizando la relación capital. ¿Es el número de registros que sale correcto? Justifica tu respuesta
+SELECT *
+FROM Pais JOIN Ciudad 
+ON Pais.Capital = Ciudad.Id
+WHERE Capital IS NOT NULL; 
+--232 registros
+
+-- 4. Listado de lenguas oficiales habladas en países con una densidad de población mayor que 1000 habitantes por kilómetro cuadrado
+SELECT DISTINCT Lengua
+FROM LenguaPais JOIN Pais 
+ON LenguaPais.CodigoPais = Pais.Codigo 
+WHERE Poblacion / SUperficie > 1000 AND EsOficial ='T';
+
+-- 5. Listado de países que tienen alguna ciudad con más de 8 millones de habitantes
+SELECT DISTINCT Pais.Nombre AS 'Pais' 
+FROM Pais JOIN Ciudad 
+ON Pais.Codigo = Ciudad.CodigoPais
+WHERE Ciudad.Poblacion > 8000000;
+
+-- 6. Listado de capitales de los países que han aumentado su PNB
+SELECT Ciudad.Nombre AS 'Capitales'
+FROM Ciudad JOIN Pais 
+ON Ciudad.Id = Pais.Capital  
+WHERE PNB > PNBAnt;
+
+-- 7. Nombre de las capitales de los diez países más poblados
+SELECT Ciudad.Nombre AS 'Capitales de los diez paises mas poblados'
+FROM Ciudad JOIN Pais 
+ON Ciudad.Id = Pais.Capital 
+ORDER BY Pais.Poblacion DESC 
+LIMIT 10;
+
+
+-- -----------------------------------------------------------------------------
+-- JOIN de más de dos tablas
+-- -----------------------------------------------------------------------------
+
+-- Estructura
+SELECT *
+FROM   Tabla1 JOIN Tabla2 JOIN Tabla3
+ON     Tabla1.CAJ = Tabla2.CP AND
+       Tabla2.CAJ = Tabla3.CP;
+
+-- 8. Nombre de las Ciudades que pertenecen a países en las que el inglés es lengua oficial hablada por más del 50% de la población
+SELECT *  
+FROM Ciudad JOIN Pais JOIN LenguaPais 
+ON Ciudad.CodigoPais = Pais.Codigo AND Pais.Codigo = LenguaPais.CodigoPais
+WHERE Lengua = 'English' AND EsOficial = 'T' AND Porcentaje > 50;
+
+-- 9. Lenguas oficiales que se hablan en los países que han aumentado el PNB y cuyas capitales tienen más de 5 millones de habitantes
+SELECT DISTINCT Lengua AS 'Lenguas'
+FROM LenguaPais JOIN Pais JOIN Ciudad
+ON LenguaPais.CodigoPais = Pais.Codigo AND Pais.Capital = Ciudad.Id
+WHERE PNB > PNBAnt AND EsOficial = 'T' AND Ciudad.Poblacion > 5000000;
+
+-- 10. Lenguas oficiales que se hablan en los países cuya capital tiene, como mínimo un décimo de la población del país al que pertenece
+SELECT DISTINCT Lengua AS 'Lenguas'
+FROM LEnguaPais JOIN Pais JOIN Ciudad 
+ON LenguaPais.CodigoPais = Pais.Codigo AND Pais.Capital = Ciudad.Id
+WHERE EsOficial = 'T' AND Ciudad.Poblacion >= Pais.Poblacion / 10;
+
+-- 11. Capitales de países del continente sudamericano (South America) cuya lengua oficial es el inglés
+SELECT Ciudad AS 'Capitales'
+FROM Ciudad JOIN Pais JOIN LenguaPais 
+ON Ciudad.Id = Pais.Capital AND Pais.Codigo = LenguaPais.CodigoPais
+WHERE EsOficial = 'T' AND Lengua = 'English' AND Continente = 'South America';
+
+
+-- -----------------------------------------------------------------------------
+-- Base de datos de Neptuno
+-- -----------------------------------------------------------------------------
+
+-- 12. Nombre de las empresas proveedoras de productos de la categoría Condiments
+SELECT DISTINCT Proveedores.NombreEmpresa AS 'Nombre empresa proveedora'
+FROM Proveedores JOIN Productos JOIN Categorias
+ON Proveedores.IdProveedor = Productos.IdProveedor AND Productos.IdCategoria = Categorias.IdCategoria
+WHERE NombreCategoria = 'Condiments'; 
+
+
+-- Para ver la estructura de una tabla: SHOW FIELDS FROM Productos; o DESCRIBE Productos; o SHOW CREATE TABLE Productos;
+-- Para ver las tablas: SHOW Tables;
+SHOW Tables;
+SHOW FIELDS FROM Productos;
+DESCRIBE Productos;
+SHOW CREATE TABLE Productos;
+
+-- 13. Nombre de las empresas proveedoras de alguno de los productos del pedido 10777
+SELECT Proveedores.NombreEmpresa AS 'Nombre empresa proveedora'
+FROM Proveedores JOIN Productos JOIN DetallesPedido
+ON Proveedores.IdProveedor = Productos.IdProveedor AND Productos.IdProducto = DetallesPedido.IdProducto
+WHERE DetallesPedido.IdPedido = 10777;
+
+-- 14. Nombre de las empresas proveedoras de alguno de los productos de pedidos que ha servido la empleada con apellido Davolio
+SELECT DISTINCT Proveedores.NombreEmpresa AS 'Nombre empresa proveedora'
+FROM Proveedores JOIN Productos JOIN DetallesPedido JOIN Pedidos JOIN Empleados
+ON Proveedores.IdProveedor = Productos.IdProveedor AND Productos.IdProducto = DetallesPedido.IdProducto AND DetallesPedido.IdPedido = Pedidos.IdPedido AND Pedidos.IdEmpleado = Empleados.IdEmpleado
+WHERE Empleados.Apellido = 'Davolio';
+
+----
+SELECT Apellido, Nombre, DescripcionTerritorio, DescripcionRegion
+FROM Empleados JOIN TerritoriosEmpleados JOIN Territorios JOIN Region
+ON Empleados.IdEmpleado = TerritoriosEmpleados.IdEmpleado AND TerritoriosEmpleados.IdTerritorio = Territorios.IdTerritorio AND Territorios.IdRegion = Region.IdRegion;
+
+-- 15. Nombre de las empresas proveedoras de alguno de los productos de pedidos servidos por empleados de la región meridional (southern)
+SELECT DISTINCT Proveedores.NombreEmpresa AS 'Nombre empresa proveedora'
+FROM Proveedores JOIN Productos JOIN DetallesPedido JOIN Pedidos JOIN Empleados JOIN TerritoriosEmpleados JOIN Territorios JOIN Region
+ON Proveedores.IdProveedor = Productos.IdProveedor AND Productos.IdProducto = DetallesPedido.IdProducto AND DetallesPedido.IdPedido = Pedidos.IdPedido AND Pedidos.IdEmpleado = Empleados.IdEmpleado AND Empleados.IdEmpleado = TerritoriosEmpleados.IdEmpleado AND TerritoriosEmpleados.IdTerritorio = Territorios.IdTerritorio AND Territorios.IdRegion = Region.IdRegion
+WHERE DescripcionRegion = 'Southern';
+
+-- 16. Nombre de las empresas proveedoras de alguno de los productos de la categoría condiments de pedidos servidos por empleados de la región septentrional (southern)
+SELECT DISTINCT Proveedores.NombreEmpresa AS 'Nombre empresa proveedora'
+FROM Proveedores JOIN Productos JOIN DetallesPedido JOIN Pedidos JOIN Empleados JOIN TerritoriosEmpleados JOIN Territorios JOIN Region JOIN Categorias
+ON Proveedores.IdProveedor = Productos.IdProveedor AND Productos.IdProducto = DetallesPedido.IdProducto AND DetallesPedido.IdPedido = Pedidos.IdPedido AND Pedidos.IdEmpleado = Empleados.IdEmpleado AND Empleados.IdEmpleado = TerritoriosEmpleados.IdEmpleado AND TerritoriosEmpleados.IdTerritorio = Territorios.IdTerritorio AND Territorios.IdRegion = Region.IdRegion AND Productos.IdCategoria = Categorias.IdCategoria
+WHERE DescripcionRegion = 'Southern' AND Categorias.NombreCategoria = 'Condiments';
+
+-- 17. Nombre de las empresas proveedoras de alguno de los productos de la categoría condiments de pedidos servidos por empleados de la región septentrional (southern) de pedidos del año 1996
+SELECT DISTINCT Proveedores.NombreEmpresa AS 'Nombre empresa proveedora'
+FROM Proveedores JOIN Productos JOIN DetallesPedido JOIN Pedidos JOIN Empleados JOIN TerritoriosEmpleados JOIN Territorios JOIN Region JOIN Categorias
+ON Proveedores.IdProveedor = Productos.IdProveedor AND Productos.IdProducto = DetallesPedido.IdProducto AND DetallesPedido.IdPedido = Pedidos.IdPedido AND Pedidos.IdEmpleado = Empleados.IdEmpleado AND Empleados.IdEmpleado = TerritoriosEmpleados.IdEmpleado AND TerritoriosEmpleados.IdTerritorio = Territorios.IdTerritorio AND Territorios.IdRegion = Region.IdRegion AND Productos.IdCategoria = Categorias.IdCategoria
+WHERE DescripcionRegion = 'Southern' AND Categorias.NombreCategoria = 'Condiments' AND Year(FechaPedido) = 1996;
+
+-- -----------------------------------------------------------------------------
+-- LEFT JOIN
+-- -----------------------------------------------------------------------------
+-- 18. ¿Cuantos países hay?
+SELECT COUNT(*) AS 'Numero de paises'
+FROM Pais;
+
+-- 19. Indica cuántos países hay que tienen capital. Nota: usa sólo la función COUNT() sin WHERE
+SELECT COUNT(Capital) AS 'Paises que tienen capital'
+FROM Pais;
+
+-- 20. Indica cuántos países hay que no tienen capital. Nota: usa la función COUNT() sin WHERE
+SELECT COUNT(*) - COUNT(Capital) AS 'Paises que no tienen capital'
+FROM Pais;
+
+-- 21. Indica cuántos países hay que no tienen capital. Nota: usa la función COUNT(*), e IS NULL en el WHERE
+SELECT COUNT(*) AS 'Paises que no tienen capital'
+FROM Pais 
+WHERE Capital IS NULL;
+
+-- 22. Listado de países que no tienen capital
+SELECT Nombre AS 'Paises que no tienen capital'
+FROM Pais 
+WHERE Capital IS NULL;
+
+-- 23. Listado de todos los países junto con el nombre de su capital
+SELECT Pais.Nombre AS 'Pais', Ciudad.Nombre AS 'Capital'
+FROM Pais LEFT JOIN Ciudad
+ON Pais.Capital = Ciudad.Id;
+
+-- 24. Listado de todas las ciudades junto con el nombre del país del que son capital
+SELECT Pais.Nombre AS 'Pais', Ciudad.Nombre AS 'Capital'
+FROM Ciudad LEFT JOIN Pais
+ON Ciudad.Id = Pais.Capital;
+
+-- 25. Países que no tienen ninguna lengua
+SELECT Nombre AS 'Paises que no tienen lengua'
+FROM Pais LEFT JOIN LenguaPais
+ON Pais.Codigo = LenguaPais.CodigoPais 
+WHERE LenguaPais.Lengua IS NULL;
+
+-- 26. Número de países que no tienen ninguna lengua
+SELECT COUNT(*) AS 'Paises que no tienen lengua'
+FROM Pais LEFT JOIN LenguaPais
+ON Pais.Codigo = LenguaPais.CodigoPais 
+WHERE LenguaPais.Lengua IS NULL;
+
+-- 27. Número de países que tienen alguna lengua
+SELECT(SELECT COUNT(*) FROM Pais) - COUNT(*) AS 'Paises que no tienen lengua'
+FROM Pais LEFT JOIN LenguaPais
+ON Pais.Codigo = LenguaPais.CodigoPais 
+WHERE LenguaPais.Lengua IS NULL;
+
+SELECT COUNT(DISTINCT CodigoPais) AS 'Paises que tienen alguna lengua'
+FROM LenguaPais;
+
+-- 28. Número de ciudades que no pertenecen a ningún país
+SELECT COUNT(*) AS 'Ciudades que no pertenecen a ningun pais'
+FROM Ciudad
+WHERE CodigoPais IS NULL;
+
+-- 29. Listado de países que no tienen ninguna ciudad
+SELECT Pais.Nombre AS 'Pais sin ciudades'
+FROM Pais LEFT JOIN Ciudad
+ON Pais.Codigo = Ciudad.CodigoPais 
+WHERE Ciudad.Id IS NULL;
+
+-- 30. Número de países que no tienen ninguna ciudad
+SELECT COUNT(*) AS 'Pais sin ciudades'
+FROM Pais LEFT JOIN Ciudad
+ON Pais.Codigo = Ciudad.CodigoPais 
+WHERE Ciudad.Id IS NULL;
+
+-- 31. Ciudades que no son capital
+SELECT Ciudad.Nombre AS 'Ciudades que no son capital'
+FROM Ciudad LEFT JOIN Pais 
+ON Ciudad.Id = Pais.Capital 
+WHERE Pais.Codigo IS NULL;
+
+-- 32. Número de ciudades que no son capital
+SELECT COUNT(*) AS 'Ciudades que no son capital'
+FROM Ciudad LEFT JOIN Pais 
+ON Ciudad.Id = Pais.Capital 
+WHERE Pais.Codigo IS NULL;
+
+-- 33. Ciudades españolas (con código ESP) que no son capital
+SELECT Ciudad.Nombre AS 'Ciudades españolas que no son capital'
+FROM Ciudad LEFT JOIN Pais
+ON Ciudad.Id = Pais.Capital 
+WHERE Ciudad.CodigoPais = 'ESP' AND Pais.Codigo IS NULL;
+
+-- 34. Número de países que no tienen capital
+SELECT COUNT(*) AS 'Paises que no tienen capital'
+FROM Pais LEFT JOIN Ciudad 
+ON Pais.Capital = Ciudad.Id
+WHERE Ciudad.Id IS NULL;
+
+SELECT COUNT(*) AS 'Paises que no tienen capital'
+FROM Pais 
+WHERE Capital IS NULL;
+
+-- 35. Capitales que no son capital de ningún país
+-- Esta consulta no se puede hacer porque no tenemos una tabla específica de Capitales
+-- De la tabla ciudades, algunas son capitales y otras no
+-- No tenemos ninguna manera de saber si una ciudad es capital o sólo ciudad.
+
+-- 36. Capitales que no son ciudad de ningún país
+SELECT Ciudad.Nombre AS 'Capitales que no son ciudad de ningun pais'
+FROM Pais JOIN Ciudad 
+ON Ciudad.Id = Pais.Capital 
+WHERE Ciudad.CodigoPais IS NULL;
+
+-- 37. Capitales que no son ciudad del país del que son capital
+SELECT Ciudad.Nombre AS 'Capitales'
+FROM Pais JOIN Ciudad 
+ON Pais.Capital = Ciudad.Id 
+WHERE Pais.Codigo <> Ciudad.CodigoPais;
+
+-- 38. Listado de nombre y apellidos de los empleados junto con el nombre y apellidos de su jefe
+SELECT Subordinados.Apellido AS 'Apellido Subordinado',
+       Subordinados.Nombre AS 'Nombre Subordinado',
+       Jefes.Apellido AS 'Apellido Jefe', 
+       Jefes.Nombre AS 'Nombre Jefe'  
+FROM Empleados AS Subordinados LEFT JOIN Empleados AS Jefes
+ON Subordinados.Superior = Jefes.IdEmpleado;
+
+-- 39. Número de pedidos realizados por empleados de Buchanan
+SELECT COUNT(*)  AS 'Numero de pedidos'
+FROM Pedidos JOIN Empleados AS Subordinados JOIN Empleados AS Jefes
+ON Pedidos.IdEmpleado = Subordinados.IdEmpleado AND Subordinados.Superior = Jefes.IdEmpleado
+WHERE Jefes.Apellido = 'Buchanan';
+
+-- 40. Nombre de las ciudades cuyo nombre comienza por 'Vale' o que tienen entre 730 mil y 740 mil habitantes. No usar OR, usar UNION
+SELECT Ciudad.Nombre AS 'Ciudades que nombre empieza por VALE', Id
+FROM Ciudad
+WHERE Ciudad.Nombre LIKE 'Vale%'
+UNION DISTINCT
+SELECT Ciudad.Nombre AS 'Ciudades que nombre empieza por VALE', Id
+FROM Ciudad
+WHERE Poblacion BETWEEN 730000 AND 740000;
+
+-- 41. Listado de países, ciudades y lenguas
+SELECT Nombre AS 'Paises, ciudades y lenguas'
+FROM Pais 
+UNION ALL 
+SELECT Nombre
+FROM Ciudad 
+UNION ALL 
+SELECT DISTINCT Lengua
+FROM LenguaPais;
+
+-- 42. Listado de países, ciudades y lenguas indicando si es un país, una ciudad o una lengua
+SELECT Nombre AS 'Paises, ciudades y lenguas', 'Pais' AS 'Tipo'
+FROM Pais
+UNION ALL 
+SELECT Nombre, 'Ciudad'
+FROM Ciudad 
+UNION ALL 
+SELECT DISTINCT Lengua, 'Lengua'
+FROM LenguaPais;
+
+/*
+FUTBOL 
+
+Equipos
+IdEquipo Nombre         IdLiga
+1        Real Madrid    1     
+2        Tottenham      2
+3        Osasuna        1
+4        Hercules       NULL
+
+Ligas
+IdLiga  Nombre
+1       LaLiga
+2       Premier League
+3       Ligue 1
+*/
+SELECT Equipos.Nombre AS 'Equipo', Ligas.Nombre AS 'Liga'
+FROM Equipos LEFT JOIN Ligas 
+ON Equipos.IdLiga = Ligas.IdLiga
+UNION ALL 
+SELECT Equipos.Nombre, Ligas.Nombre
+FROM Ligas LEFT JOIN Equipos
+ON Equipos.IdEquipo IS NULL;
+
+
+-- 43. MySQL no tiene la orden FULL JOIN por lo que nos ayudaremos de UNION. Listado de países con sus ciudades (sólo los nombres) en el que aparezcan todos los países, aunque no tengan ciudades y todas las ciudades, aunque no sean ciudad de ningún país
+SELECT Pais.Nombre AS 'Pais', Ciudad.Nombre AS 'Ciudad'
+FROM Ciudad LEFT JOIN Pais
+ON Ciudad.CodigoPais = Pais.Codigo
+UNION ALL 
+SELECT Pais.Nombre , Ciudad.Nombre
+FROM Pais LEFT JOIN Ciudad
+ON Ciudad.CodigoPais = Pais.Codigo
+WHERE Ciudad.ID IS NULL LIMIT 0;
+
+-- 44. Listado de todas las ciudades junto con el nombre del país del que son capital en el que salgan todos los países y todas las ciudades
+SELECT Ciudad.Nombre AS 'Ciudad Capital', Pais.Nombre AS 'Pais'
+FROM Ciudad LEFT JOIN Pais 
+ON Ciudad.Id = Pais.Capital 
+UNION ALL 
+SELECT Ciudad.Nombre AS 'Ciudad Capital', Pais.Nombre AS 'Pais'
+FROM Pais LEFT JOIN Ciudad 
+ON Ciudad.Id = Pais.Capital
+WHERE Ciudad.Id IS NULL LIMIT 100;
+
+-- 45. Listado de ciudades o países que tienen más de un millón de habitantes ordenado alfabéticamente. Nota: queremos saber cuándo se trata de una ciudad y cuándo se trata de un país
+SELECT Nombre, 'Pais' AS 'Tipo'
+FROM Pais
+WHERE Poblacion > 1000000
+UNION ALL 
+SELECT Nombre, 'Ciudad'
+FROM Ciudad
+WHERE Poblacion > 1000000
+ORDER BY Nombre;
+
+-- 46. Listado de los diez países más poblados junto las diez ciudades más pobladas ordenados por población de menor a mayor. Queremos identificar cuando es un país y cuando es una ciudad
+(SELECT    Nombre, 'Pais' AS 'Tipo', Poblacion AS 'Poblacion'
+FROM       Pais 
+ORDER BY   Poblacion DESC 
+LIMIT 10)
+UNION ALL 
+(SELECT    Nombre, 'Ciudad', Poblacion
+FROM       Ciudad 
+ORDER BY   Poblacion DESC 
+LIMIT 10)
+ORDER BY  `Poblacion`;
+
+
+-- -----------------------------------------------------------------------------
+-- JOIN de una tabla consigo misma
+-- -----------------------------------------------------------------------------
+
+-- 47. Para elaborar un juego necesitamos un listado de parejas de países que tengan la misma población
+SELECT PaisI.Nombre AS 'pais1', PaisD.Nombre AS 'pais2' 
+FROM   Pais AS PaisI JOIN Pais AS PaisD
+WHERE  PaisI.Poblacion = PaisD.Poblacion AND 
+       PaisI.Codigo > PaisD.Codigo
+       PaisI.Poblacion <> 0;
+
+-- 48. Para elaborar un juego, deseamos un listado de parejas de países del continente europeo (europe) con más de 50 millones de habitantes de manera que el año de independencia del primer país sea menor que el del segundo
+SELECT PaisI.Nombre AS 'pais1', PaisD.Nombre AS 'pais2'
+FROM Pais AS PaisI JOIN Pais AS PaisD 
+WHERE PaisI.Poblacion > 50000000 
+      AND PaisD.Poblacion > 50000000 
+      AND PaisI.AnyIndep < PaisD.AnyIndep 
+      AND PaisI.Continente = 'Europe' 
+      AND PaisD.Continente = 'Europe';
+      
+-- 49. Listado de jefes de Neptuno
+SELECT DISTINCT
+       Jefes.Apellido AS 'Apellido Jefe', 
+       Jefes.Nombre AS 'Nombre Jefe'  
+FROM   Empleados AS Subordinados JOIN Empleados AS Jefes
+ON     Subordinados.Superior = Jefes.IdEmpleado;
+
+-- 50. Listado de subordinados de Neptuno
+SELECT  Apellido AS 'Apellido Subordinado',
+        Nombre AS 'Nombre Subordinado'  
+FROM    Empleados
+WHERE   Superior IS NOT NULL;
+
+-- 51. Empleados cuyo jefe gana menos de 2000€
+SELECT Subordinados.Apellido AS 'Apellido Subordinado',
+       Subordinados.Nombre AS 'Nombre Subordinado'
+FROM Empleados AS Subordinados JOIN Empleados AS Jefes
+ON Subordinados.Superior = Jefes.IdEmpleado
+WHERE Jefes.Salario < 2000.0;
+
+-- 52. Pedidos (indicar IdPedido) del año 1996 de empleados cuyo jefe trabaja con el territorio de New York
+SELECT DISTINCT IdPedido AS 'Id de pedido'  
+FROM Pedidos JOIN Empleados AS Subordinados JOIN Empleados AS Jefes JOIN TerritoriosEmpleados JOIN Territorios
+ON Pedidos.IdEmpleado = Subordinados.IdEmpleado         AND 
+   Subordinados.Superior = Jefes.IdEmpleado             AND 
+   Jefes.IdEmpleado = TerritoriosEmpleados.IdEmpleado   AND 
+   TerritoriosEmpleados.IdTerritorio = Territorios.IdTerritorio
+WHERE DescripcionTerritorio = 'New York' AND YEAR(FechaPedido) = 1996;
+
+
+-- -----------------------------------------------------------------------------
+-- Consultas de LEFT JOIN con Neptuno
+-- -----------------------------------------------------------------------------
+
+
+--Productos que no tienen proveedor
+SELECT Productos.IdProducto
+FROM Productos
+WHERE IdProveedor IS NULL;
+--Proveedores que no proveen ningún producto
+SELECT 
+FROM Proveedores LEFT JOIN Productos
+ON Proveedores.IdProveedor = Productos.IdProveedor
+WHERE Productos.IdProveedor IS NULL;
+--Productos que no pertenecen a ninguna categoría
+SELECT Productos.IdCategoria 
+FROM Categorias LEFT JOIN Productos 
+ON Categorias.NombreCategoria = Productos.IdProducto;
+--Categorías que no tienen ningún producto
+SELECT Categorias.NombreCategoria
+FROM Productos LEFT JOIN Categorias
+ON Productos.IdCategoria = Categorias.IdCategoria; 
+--Pedidos que no tienen ningún producto
+FROM Pedidos LEFT JOIN DetallesPedido
+--Productos que no han sido pedidos nunca
+--Proveedores que tienen algún producto que no ha sido pedido nunca
+--Pedidos sin cliente
+--Pedidos sin empleado
+--Clientes sin pedidos
+--Empleados sin pedidos
+
+-- -----------------------------------------------------------------------------
+-- Subconsultas de Escalar
+-- -----------------------------------------------------------------------------
+
+-- 53. Listado de las ciudades que tienen la misma población que la ciudad El Limón
+SELECT Nombre AS 'Ciudades que tienen la misma población que la ciudad El Limón'
+FROM   Ciudad
+WHERE  Poblacion = (SELECT Poblacion 
+                    FROM Ciudad
+                    WHERE Nombre = 'El Limón'
+                    LIMIT 1);
+                    
+-- 54. Listado de las ciudades que tienen la misma población que la ciudad El Limón. Quita del resultado la ciudad de El Limón, que ya sabemos que tiene los mismos habitantes que El Limón
+SELECT Nombre AS 'Ciudades que tienen la misma población que la ciudad El Limón'
+FROM   Ciudad
+WHERE  Poblacion = (SELECT Poblacion 
+                    FROM Ciudad
+                    WHERE Nombre = 'El Limón'
+                    LIMIT 1)
+AND Nombre <> 'El Limón';
+
+-- 55. Listado de las ciudades que tienen la misma población que la ciudad de Guadalupe
+SELECT Nombre AS 'Ciudades que tienen la misma población que la ciudad El Limón'
+FROM   Ciudad
+WHERE  Poblacion = (SELECT Poblacion 
+                    FROM Ciudad
+                    WHERE Nombre = 'Guadalupe'
+                    LIMIT 1)
+AND Nombre <> 'Guadalupe';
+
+-- 56. Listado de las ciudades que tienen una población mayor que Madrid y menor que Berlín
+SELECT Nombre AS 'Ciudades que tienen una población mayor que Madrid y menor que Berlín'
+FROM   Ciudad
+WHERE   Poblacion > (SELECT Poblacion 
+                     FROM Ciudad
+                     WHERE Nombre = 'Madrid'
+                     LIMIT 1)
+        AND 
+        Poblacion < (SELECT Poblacion 
+                     FROM Ciudad
+                     WHERE Nombre = 'Berlin'
+                     LIMIT 1);
+
+-- 57. Listado de países en los que el español (Spanish) es oficial y cuyo porcentaje de hablantes es mayor o igual que el del español España (ESP)
+SELECT Nombre AS 'Paises en los que el español es oficial'
+FROM LenguaPais JOIN Pais 
+ON LenguaPais.CodigoPais = Pais.Codigo
+WHERE EsOficial = 'T' AND Lengua = 'Spanish' AND Porcentaje >= (SELECT Porcentaje 
+                                                              FROM LenguaPais
+                                                              WHERE CodigoPais = 'ESP' AND Lengua = 'Spanish');
+
+-- 58. Listado de capitales que tienen una población como mínimo 10 veces superior a la de la ciudad de Alicante
+SELECT Ciudad.Nombre AS 'Capitales'
+FROM Ciudad JOIN Pais 
+ON Ciudad.Id = Pais.Capital
+WHERE Ciudad.Poblacion >= 10*(SELECT Poblacion 
+                       FROM Ciudad 
+                       WHERE Nombre LIKE 'Alicante%');
+                       
+-- 59. Capitales del continente africano con el mismo idioma oficial que el idioma oficial de Egipto (Egypt)
+SELECT Ciudad.Nombre AS 'Capitales del continente africano'
+FROM Ciudad JOIN Pais JOIN LenguaPais  
+ON Ciudad.Id = Pais.Capital AND Pais.Codigo = LenguaPais.CodigoPais
+WHERE Pais.Continente = 'Africa' AND LenguaPais.EsOficial = 'T' AND Lengua = (SELECT Lengua 
+                                                                              FROM Pais JOIN LenguaPais
+                                                                              ON LenguaPais.CodigoPais = Pais.Codigo
+                                                                              WHERE Pais.Nombre = 'Egypt' AND EsOficial = 'T' LIMIT 1);
+                                                                              
+-- 60. Listado de países, su año de independencia y su densidad de población para países con un año de independencia posterior al de España y con una densidad de población superior a la de Francia (France)
+SELECT Pais.Nombre AS 'Paises', AnyIndep AS 'Año de indepencia', ROUND (Poblacion/Superficie) AS 'Densidad de poblacion'
+FROM Pais
+WHERE AnyIndep >(SELECT AnyIndep
+                 FROM Pais 
+                 WHERE Nombre = 'Spain'
+                 LIMIT 1)
+  AND Poblacion/Superficie > (
+                 SELECT Poblacion/Superficie
+                 FROM Pais 
+                 WHERE Nombre = 'France'
+                 LIMIT 1);
+ 
+-- -----------------------------------------------------------------------------
+-- Subconsultas de columna convertida a escalar
+-- -----------------------------------------------------------------------------
+
+-- Aggregate Functions: AVG, COUNT, COUNT(DISTINCT), COUNT(*), GROUPCONCAT, MIN, MAX y SUM
+-- COUNT a secas cuenta cuantos valores no nulos, es decir, sirve cuando quieres contar registros de un campo que tiene nulos como por ejemplo el AnyIndep.
+ 
+-- 61. Ciudades españolas con una población superior a la media (de la población de las ciudades españolas)
+SELECT Ciudad.Nombre AS 'Ciudad con poblacion mayor a la media' 
+FROM Ciudad JOIN Pais
+ON Ciudad.CodigoPais = Pais.Codigo
+WHERE Pais.Nombre = 'Spain' AND Ciudad.Poblacion > (
+                   SELECT AVG(Ciudad.Poblacion)
+                   FROM Ciudad JOIN Pais 
+                   ON Ciudad.CodigoPais = Pais.Codigo
+                   WHERE Pais.Nombre = 'Spain');
+                   
+-- 62. Ciudades más pobladas que la ciudad de mayor población del continente europeo
+SELECT Nombre AS 'Ciudades mas pobladas que la ciudad de Europa con mas poblacion'
+FROM Ciudad
+WHERE Poblacion > (
+                            SELECT MAX(Ciudad.Poblacion) 
+                            FROM Ciudad JOIN Pais 
+                            ON Ciudad.CodigoPais = Pais.Codigo
+                            WHERE Continente = 'Europe');
+                            
+-- No usamos nunca ORDER BY ... LIMIT 1 para obtener el máximo:
+SELECT Poblacion FROM Ciudad ORDER BY 1 DESC LIMIT 1; -- MAL
+SELECT MAX(Poblacion) FROM Ciudad; -- BIEN
+
+-- 63. Ciudades con más población que la población total de todas las ciudades de Francia
+SELECT Nombre AS 'Ciudades con más población que la población total de todas las ciudades de Francia'
+FROM Ciudad
+WHERE Poblacion > (
+                    SELECT SUM(Ciudad.Poblacion)
+                    FROM Ciudad JOIN Pais 
+                    ON Ciudad.CodigoPais = Pais.Codigo
+                    WHERE Pais.Nombre = 'France');
+
+-- 64. Países con un PNB mayor que el país europeo con mayor PNB
+SELECT Nombre AS 'Países con un PNB mayor que el país europeo con mayor PNB'
+FROM Pais 
+WHERE PNB > (
+            SELECT MAX(PNB)
+            FROM Pais 
+            WHERE Continente = 'Europe');
+
+-- 65. Ciudades que pertenecen a países que tienen una renta per cápita mayor que la renta per cápita media de los países en los que el inglés es lengua oficial
+SELECT Ciudad.Nombre AS 'Ciudades con renta per capita mayor que la media'
+FROM Ciudad JOIN Pais 
+ON Ciudad.CodigoPais = Pais.Codigo 
+WHERE (Pais.PNB*1000000)/Pais.Poblacion > (
+                                SELECT AVG((PNB*1000000)/Poblacion)
+                                FROM Pais JOIN LenguaPais 
+                                ON Pais.Codigo = LenguaPais.CodigoPais
+                                WHERE Lengua = 'English' AND EsOficial = 'T');
+                                                             
+
+/*
+ANY y ALL
+En subconsultas que devuelven una columna, ANY quiere decir alguno de los registros de la subconsulta y ALL todos los registros.
+*/
+
+-- Comportamiento de ANY y ALL con nulos y listas vacías
+/*
+ANY
+¿10 = ANY (15, 10)?        TRUE,            SELECT 10 = ANY (SELECT c1 FROM ta);
+¿10 = ANY (15, 10, NULL)?  TRUE,            SELECT 10 = ANY (SELECT c1 FROM tan);
+¿30 = ANY (15, 10)?        FALSE,           SELECT 30 = ANY (SELECT c1 FROM ta);
+¿30 = ANY (15, 10, NULL)?  NULL(No se sabe),SELECT 30 = ANY (SELECT c1 FROM tan);
+¿10 = ANY ()?              xxx              SELECT 10 = ANY (SELECT c1 FROM ta WHERE c1 =66);     
+
+ALL
+¿10 <> ALL (15, 10)?       FALSE, SELECT 10 <> ALL (SELECT c1 FROM ta);      
+¿10 <> ALL (15, 10, NULL)? FALSE, SELECT 10 <> ALL (SELECT c1 FROM tan);
+¿30 <> ALL (15, 10)?       TRUE,  SELECT 30 <> ALL (SELECT c1 FROM ta);  
+¿30 <> ALL (15, 10, NULL)? NULL,  SELECT 30 <> ALL (SELECT c1 FROM tan);
+¿10 <> ALL ()?             TRUE,  SELECT 10 <> ALL (SELECT c1 FROM ta WHERE c1 =66);
+
+¿10 =  ALL (15, 10)?  No tiene sentido, siempre da FALSE 
+¿10 <> ANY (15, 10)?  No tiene sentido, siempre da TRUE
+
+IN     <=> = ANY
+NOT IN <=> <> ALL
+SOME   <=> ANY (no lo usaremos en clase)
+
+
+SELECT * FROM tb WHERE c1 = ANY (SELECT c1 FROM ta);
+SELECT * FROM tb WHERE c1 = ANY (SELECT c1 FROM ta WHERE C1 = 66);
+SELECT * FROM tb WHERE c1 = ANY (SELECT c1 FROM ta WHERE C1 = 66);
+SELECT * FROM tb WHERE c1 <> ALL (SELECT c1 FROM ta WHERE C1 = 66);
+
+Resumen:
+Los nulos no afectan al ANY, pero sí a ALL
+Si la subconsulta devuelve un conjunto vacío de registros, ANY devuelve siempre falso y la consulta principal no devolverá ningún registro (salvo que pongamos NOT); y ALL devuelve siempre verdadero y la consulta principal devolverá todos los registros (salvo que pongamos NOT). ANY no devuelve ninguno y ALL devuelve todos.
+
+Lo de cual es el comportamiento deseado de ANY y ALL cuando la subconsulta devuelve un conjunto vacío de registros no está claro. Si cogemos a una persona que no sabe informática y le pedimos que seleccione a los alumnos de nuestra clase cuya edad es distinta de la de todos los alumnos de la clase de al lado y esta persona va a la clase de al lado y descubre que no hay nadie, seguramente volverá y en vez de coger a todos los alumnos de nuestra clase nos dirá que en la clase de al lado no había nadie, es decir, nos dará un error.
+
+Parece ser que lo que no es lógico es que en una consulta de ANY o de ALL, la subconsulta de un conjunto vacío de registros. Por lo tanto, en los ejercicios que hagamos, lo importante es saber cómo se comportará la consulta principal en caso de que la subconsulta de un conjunto vacío de registros. Lo de si es lógico o no dependerá de cada caso y lo más normal sería sacar un aviso al usuario de que la subconsulta a dado un conjunto vacío de registros (expresado de manera inteligible para el usuario).
+
+*/
+
+-- ¡IMPORTANTE!
+-- En todas las consultas de ANY, ALL, IN tenenmos que hacer tres cosas:
+-- 1. Indicar qué pasa si hay nulos en la subconsulta
+-- 2. Indicar qué pasa si la subconsulta devuelve un conjunto vacío de registros
+-- 3. Comprobar que la subconsulta no devuelve un conjunto vacío de registros
+
+-- 66. Países con un año de independencia igual al de alguno de los países con una superficie mayor que 500000 kilómetros cuadrados
+SELECT Nombre AS 'Pais', Superficie
+FROM Pais
+WHERE AnyIndep IN (SELECT AnyIndep 
+                   FROM Pais 
+                   WHERE Superficie > 500000);
+-- Si la subconsulta hay algun nulo no afecta al resultado
+-- Si la subconsulta devuelve un conjunto vacio de registros no sale ningun Pais
+SELECT COUNT(*)>0
+FROM Pais
+WHERE Superficie > 500000;
+
+-- 67. Países con un año de independencia distinto del de todos los países con una superficie mayor que 500000 kilómetros cuadrados
+SELECT Nombre AS 'Pais', Superficie
+FROM Pais
+WHERE AnyIndep NOT IN (SELECT AnyIndep 
+                   FROM Pais 
+                   WHERE Superficie > 500000 AND AnyIndep IS NOT NULL);
+-- Si en la subconsulta hay algun valor NULL no saldra ningun reistro, por lo que hay que eliminar los nulos con IS NOT NULL
+-- Si la subconsulta devuelve un conjunto vacio de registro saldrian todos los paises
+SELECT COUNT(*)>0
+FROM Pais
+WHERE Superficie > 500000 AND AnyIndep IS NOT NULL;  
+-- Primero ejecutamos esto, que nos indica si podemos ejecutarla porque daria TRUE
+
+/* Resumen:
+=  ANY -> tiene sentido
+<> ALL -> tiene sentido
+<> ANY -> no tiene sentido
+=  ALL -> no tiene sentido
+> ANY <-> > MIN()
+> ALL <-> > MAX()
+< ANY <-> < MAX()
+< ALL <-> < MIN()
+*/
+
+DROP PROCEDURE IF EXISTS Consulta66;
+delimiter //
+CREATE PROCEDURE Consulta66(ParamSup INT)
+BEGIN
+    IF (SELECT COUNT(*)>0
+        FROM   Pais
+        WHERE  Superficie > ParamSup AND AnyIndep IS NOT NULL)
+   THEN
+	SELECT Pais.Nombre AS 'País', AnyIndep
+	FROM   Pais  
+	WHERE  AnyIndep <> ALL (    
+		SELECT AnyIndep
+		FROM   Pais
+		WHERE  Superficie > ParamSup AND AnyIndep IS NOT NULL);
+   ELSE
+       SELECT CONCAT('No hay ningún país con una superficie mayor que ',
+	               ParamSup, ' kilómetros cuadrados') AS 'Error:';
+   END IF;
+END//
+delimiter ;
+CALL Consulta66(500000);
+
+-- 68. Países con un año de independencia mayor que alguno de los países cuya capital tiene más de cinco millones de habitantes. Nota: obtener las dos soluciones (ANY-ALL-IN y MAX-MIN). Reescribe el enunciado para que MAX-MIN en vez de ANY-ALL-IN
+SELECT Nombre
+FROM Pais 
+WHERE AnyIndep > ANY(SELECT DISTINCT AnyIndep 
+                FROM Pais JOIN Ciudad
+                ON Pais.Capital = Ciudad.Id
+                WHERE Ciudad.Poblacion > 5000000);
+-- Si hay algun registro con valor NULL en la subconsulta no afecta al resultado
+-- Si la subconsulta devuelve un conjunto vacio de registro no sale ningun registro
+-- Debe dar > 0 para ejecutar la consulta principal
+SELECT COUNT(*)>0 
+FROM Pais JOIN Ciudad
+ON Pais.Capital = Ciudad.Id
+WHERE Ciudad.Poblacion > 5000000;
+
+SELECT Nombre
+FROM Pais 
+WHERE AnyIndep >(SELECT MIN(AnyIndep) 
+                FROM Pais JOIN Ciudad
+                ON Pais.Capital = Ciudad.Id
+                WHERE Ciudad.Poblacion > 5000000);
+                
+
+
+-- 69. Ciudades del mundo que empiezan por una letra distinta que la letra inicial de las ciudades españolas (con código de país ESP)
+SELECT Nombre AS 'Ciudad'
+FROM Ciudad
+WHERE LEFT(Nombre, 1) NOT IN (SELECT DISTINCT LEFT(Nombre, 1) 
+                              FROM Ciudad
+                              WHERE CodigoPais = 'ESP');
+--Si en la subconsulta hay nulos no saldra ningun registro
+--Pero no pueden salir nulos porque en ese campo no existen nulos 
+--La siguiente consulta debe dar verdadero para ejecutar la consulta principal
+SELECT COUNT(*)>0
+FROM Ciudad 
+WHERE CodigoPais = 'ESP';
+
+
+-- -----------------------------------------------------------------------------
+--  CONSULTAS DE INTERSECCIÓN DE CONJUNTOS
+-- -----------------------------------------------------------------------------
+
+-- 70. Países cuyo nombre coincide con el de alguna ciudad
+SELECT Nombre AS 'Pais'
+FROM Pais 
+WHERE Nombre IN (SELECT Nombre FROM Ciudad);
+--Si la subconsulta devuelve un conjunto vacio de registros no sale ningun pais 
+--Los nulos no afectan. No puede haber ciudades con nombre nulo
+SELECT COUNT(*) FROM Ciudad; --Debe dar mayor que 0
+
+-- 71. Países cuyo nombre no coincide con el de ninguna ciudad
+SELECT Nombre
+FROM Pais 
+WHERE Nombre NOT IN (SELECT Nombre FROM Ciudad);
+--Si la subconsulta devuelve un conjunto vacio de registros no sale ningun pais 
+--Los nulos no afectan. No puede haber ciudades con nombre nulo
+SELECT COUNT(*) FROM Ciudad; --Debe dar mayor que 0
+
+-- 72. Países cuyo nombre coincide con el de alguna lengua
+SELECT Nombre
+FROM Pais 
+WHERE Nombre IN (SELECT DISTINCT Lengua FROM LenguaPais);
+--Si la subconsulta devuelve un conjunto vacio de registros no sale ningun pais 
+--Los nulos no afectan. No pueden haber Lenguas con nombre nulo 
+SELECT COUNT(*) FROM LenguaPais; --Debe dar mayor que 0
+
+-- 73. Países cuyo nombre no coincide con el de alguna lengua
+--No tiene sentido
+
+-- 74. Lenguas cuyo nombre coincide con el de alguna ciudad
+SELECT DISTINCT Lengua 
+FROM LenguaPais 
+WHERE Lengua IN (SELECT Nombre FROM Ciudad);
+--Si la subconsulta devuelve un conjunto vacio de registros no sale ninguna lengua 
+--Los nulos no afectan. No puede haber ciudades con nombre nulo
+SELECT COUNT(*) FROM Ciudad; --Debe dar mayor que 0
+-- -----------------------------------------------------------------------------
+-- FIN DEL TEMA
+-- -----------------------------------------------------------------------------
+           
